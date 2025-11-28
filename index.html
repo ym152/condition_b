@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
@@ -274,7 +274,7 @@
       font-size: 12px;
       border: 1px solid #d7e9ff;
     }
-    /* 正文区域（不再折叠） */
+    /* 正文区域 */
     .answer-content-wrapper {
       position: relative;
       margin-bottom: 8px;
@@ -303,7 +303,7 @@
     .answer-content.collapsed + .fade-mask {
       display: block;
     }
-    /* 回答底部：赞同 + 收藏 + 喜欢 */
+    /* 回答底部：赞同 + 收藏 + 喜欢 靠左 */
     .answer-footer {
       display: flex;
       align-items: center;
@@ -373,18 +373,19 @@
     .hidden-entry {
       font-size: 14px;
       color: #444;
-      cursor: pointer;
       user-select: none;
       padding: 10px 0;
     }
-    .hidden-entry .hidden-count {
-      font-weight: 500;
+    .hidden-entry .hidden-label-collapsed {
+      cursor: pointer;
     }
-    .hidden-entry:hover .hidden-count {
-      color: #175199;
+    .hidden-label-expanded {
+      display: inline;
+    }
+    .hidden-label-collapsed {
+      display: none;
     }
     .hidden-answers {
-      display: none;
       margin-top: 8px;
       margin-bottom: 16px;
     }
@@ -398,6 +399,8 @@
     .hidden-answers .inner-title-text {
       margin: 0 auto;
       white-space: nowrap;
+      cursor: pointer;
+      color: #8590a6;
     }
     .hidden-answers .inner-line {
       flex: 1;
@@ -474,7 +477,7 @@
         <button class="btn btn-outline btn-invite"><i>✉</i>邀请回答</button>
 
         <!-- 好问题按钮 -->
-        <button class="btn btn-text btn-good-question" data-base-count="11">
+        <button class="btn btn-text btn-good-question" data-base-count="221">
           <span class="icon-good">▲</span>
           <span class="good-text">好问题 221</span>
         </button>
@@ -493,7 +496,7 @@
 
     <!-- 回答标题 -->
     <div class="answer-header">
-      <div class="answer-count">正常回答示例如下</div>
+      <div class="answer-count"> </div>
       <div class="answer-sort">默认排序 ▾</div>
     </div>
 
@@ -612,16 +615,19 @@
     <!-- 分割线 -->
     <hr class="divider">
 
-    <!-- 折叠回答入口 -->
+    <!-- 折叠回答入口：默认展示“以下回答被折叠（…）” -->
     <div class="hidden-entry" id="toggleHidden">
-      <span class="hidden-count">折叠回答示例如下</span>
+      <span class="hidden-label-collapsed">折叠回答示例如下</span>
+      <span class="hidden-label-expanded">
+        <strong>以下回答被折叠</strong>（真实情境中，被折叠回答默认不展开。当前实验情境下，被折叠回答默认已被展开。）
+      </span>
     </div>
 
-    <!-- 折叠回答列表 -->
-    <div class="hidden-answers" id="hiddenList">
+    <!-- 折叠回答列表：默认展开 -->
+    <div class="hidden-answers" id="hiddenList" style="display: block;">
       <div class="inner-title-row">
         <div class="inner-line"></div>
-        <div class="inner-title-text">折叠回答示例如下</div>
+        <div class="inner-title-text" id="collapseInside">收起折叠的回答</div>
         <div class="inner-line"></div>
       </div>
 
@@ -788,7 +794,7 @@
       }
     });
 
-    // 好问题：点击后 +1，再点一次取消回到 11
+    // 好问题：点击后 +1，再点一次取消回到 base
     const goodBtn = document.querySelector('.btn-good-question');
     if (goodBtn) {
       const base = parseInt(goodBtn.getAttribute('data-base-count') || '11', 10);
@@ -867,23 +873,49 @@
       });
     });
 
-    // 折叠回答入口：单独控制 hiddenList
+    // 折叠回答：默认展开；顶部只负责“展开”，收起按钮移动到列表内部标题
     const toggleHidden = document.getElementById('toggleHidden');
     const hiddenList = document.getElementById('hiddenList');
-    let hiddenOpen = false;
+    const collapsedLabel = document.querySelector('.hidden-label-collapsed');
+    const expandedLabel = document.querySelector('.hidden-label-expanded');
+    const collapseInside = document.getElementById('collapseInside');
+
+    let hiddenOpen = true; // 默认展开
+
+    function updateHiddenUI() {
+      if (hiddenOpen) {
+        if (hiddenList) hiddenList.style.display = 'block';
+        if (collapsedLabel) collapsedLabel.style.display = 'none';
+        if (expandedLabel) expandedLabel.style.display = 'inline';
+      } else {
+        if (hiddenList) hiddenList.style.display = 'none';
+        if (collapsedLabel) collapsedLabel.style.display = 'inline';
+        if (expandedLabel) expandedLabel.style.display = 'none';
+      }
+    }
+
+    // 顶部入口：只在“折叠状态”下起作用，用于展开
     if (toggleHidden && hiddenList) {
       toggleHidden.addEventListener('click', () => {
-        hiddenOpen = !hiddenOpen;
-        if (hiddenOpen) {
-          hiddenList.style.display = 'block';
-          toggleHidden.querySelector('.hidden-count').textContent = '收起折叠的回答';
-        } else {
-          hiddenList.style.display = 'none';
-          toggleHidden.querySelector('.hidden-count').textContent = '折叠回答示例如下';
+        if (!hiddenOpen) {
+          hiddenOpen = true;
+          updateHiddenUI();
         }
       });
     }
+
+    // 列表内部标题：负责“收起折叠的回答”
+    if (collapseInside && hiddenList) {
+      collapseInside.addEventListener('click', () => {
+        if (hiddenOpen) {
+          hiddenOpen = false;
+          updateHiddenUI();
+        }
+      });
+    }
+
+    // 初始化状态
+    updateHiddenUI();
   </script>
 </body>
 </html>
-
